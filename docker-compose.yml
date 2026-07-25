@@ -1,0 +1,30 @@
+﻿services:
+  mysql:
+    image: mysql:8.0
+    container_name: orderflow-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: orderflow
+      MYSQL_USER: orderflow
+      MYSQL_PASSWORD: orderflow
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  mongodb:
+    image: mongo:7.0
+    container_name: orderflow-mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: orderflow
+      MONGO_INITDB_ROOT_PASSWORD: orderflow
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+volumes:
+  mysql_data:
+  mongo_data:

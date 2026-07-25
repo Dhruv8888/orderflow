@@ -1,0 +1,3 @@
+﻿# OrderFlow
+
+OrderFlow is a distributed, event-driven order and inventory management system built to model the hard parts of a real e-commerce backend: preventing stock overselling under concurrent load, coordinating a multi-step transaction across independently-owned services (order, inventory, payment, shipping) using the saga pattern instead of a central transaction coordinator, and maintaining a complete, replayable event history for every order via event sourcing. Full architecture, setup instructions, and design write-up coming as the project progresses — see docs/ for details as they're added.
