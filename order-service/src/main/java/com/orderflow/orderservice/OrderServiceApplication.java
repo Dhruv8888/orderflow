@@ -1,4 +1,4 @@
-package com.orderflow.order_service;
+package com.orderflow.orderservice;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
