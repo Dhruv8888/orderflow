@@ -20,9 +20,12 @@ public class OrderEvent {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
+    @JdbcTypeCode(SqlTypes.CHAR)
+    @Column(columnDefinition = "char(36)")
     private UUID id;
 
-    @Column(name = "order_id", nullable = false)
+    @JdbcTypeCode(SqlTypes.CHAR)
+    @Column(name = "order_id", nullable = false, columnDefinition = "char(36)")
     private UUID orderId;
 
     @Column(name = "event_type", nullable = false)
