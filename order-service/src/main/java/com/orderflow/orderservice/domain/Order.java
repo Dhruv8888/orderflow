@@ -1,4 +1,4 @@
-﻿package com.orderflow.orderservice.domain;
+package com.orderflow.orderservice.domain;
 
 import jakarta.persistence.*;
 import lombok.Getter;

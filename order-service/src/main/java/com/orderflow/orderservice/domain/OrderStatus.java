@@ -1,4 +1,4 @@
-﻿package com.orderflow.orderservice.domain;
+package com.orderflow.orderservice.domain;
 
 public enum OrderStatus {
     CREATED,
