@@ -4,7 +4,9 @@ import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
+import org.springframework.stereotype.Component;
 
+@Component
 public class OrderStateMachine {
 
     private static final Map<OrderStatus, Set<OrderStatus>> ALLOWED_TRANSITIONS = new EnumMap<>(OrderStatus.class);
