@@ -1,0 +1,41 @@
+### Variables
+@baseUrl = http://localhost:8081
+
+### 1. Create an order (happy path)
+POST {{baseUrl}}/orders
+Content-Type: application/json
+
+{
+  "customerId": "cust-001",
+  "items": [
+    { "productId": "prod-abc", "quantity": 2, "unitPrice": 19.99 },
+    { "productId": "prod-xyz", "quantity": 1, "unitPrice": 49.50 }
+  ]
+}
+
+### 2. Create an order with invalid input (should return 400)
+POST {{baseUrl}}/orders
+Content-Type: application/json
+
+{
+  "customerId": "",
+  "items": []
+}
+
+### 3. Get an order by ID
+# Replace {{orderId}} below with a real ID returned from request #1
+@orderId = 2027f50f-b56c-4b2d-89cd-ef372a15e04b
+
+GET {{baseUrl}}/orders/{{orderId}}
+
+### 4. Get an order that does not exist (should return 404)
+GET {{baseUrl}}/orders/00000000-0000-0000-0000-000000000000
+
+### 5. Get order history
+GET {{baseUrl}}/orders/{{orderId}}/history
+
+### 6. Get history for a nonexistent order (should return 404)
+GET {{baseUrl}}/orders/00000000-0000-0000-0000-000000000000/history
+
+### 7. Health check
+GET {{baseUrl}}/actuator/health
