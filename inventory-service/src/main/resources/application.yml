@@ -1,0 +1,24 @@
+spring:
+  application:
+    name: inventory-service
+
+  data:
+    mongodb:
+      host: localhost
+      port: 27017
+      database: inventory
+      username: orderflow
+      password: orderflow
+      authentication-database: admin
+
+server:
+  port: 8082
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  health:
+    mongodb:
+      enabled: false
