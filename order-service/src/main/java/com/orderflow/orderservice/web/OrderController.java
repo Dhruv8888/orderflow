@@ -1,7 +1,7 @@
 package com.orderflow.orderservice.web;
 
+import com.orderflow.orderservice.client.InventoryClient;
 import com.orderflow.orderservice.domain.Order;
-import com.orderflow.orderservice.domain.OrderEvent;
 import com.orderflow.orderservice.domain.OrderItem;
 import com.orderflow.orderservice.domain.OrderStatus;
 import com.orderflow.orderservice.exception.OrderNotFoundException;
@@ -39,15 +39,18 @@ public class OrderController {
     private final OrderItemRepository orderItemRepository;
     private final OrderEventRepository orderEventRepository;
     private final OrderEventService orderEventService;
+    private final InventoryClient inventoryClient;
 
     public OrderController(OrderRepository orderRepository,
                             OrderItemRepository orderItemRepository,
                             OrderEventRepository orderEventRepository,
-                            OrderEventService orderEventService) {
+                            OrderEventService orderEventService,
+                            InventoryClient inventoryClient) {
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.orderEventRepository = orderEventRepository;
         this.orderEventService = orderEventService;
+        this.inventoryClient = inventoryClient;
     }
 
     @PostMapping
@@ -72,14 +75,37 @@ public class OrderController {
             orderItemRepository.save(item);
         }
 
-        Map<String, Object> payload = new HashMap<>();
-        payload.put("orderId", order.getId());
-        payload.put("customerId", order.getCustomerId());
-        payload.put("items", request.getItems());
+        Map<String, Object> createdPayload = new HashMap<>();
+        createdPayload.put("orderId", order.getId());
+        createdPayload.put("customerId", order.getCustomerId());
+        createdPayload.put("items", request.getItems());
 
-        orderEventService.recordEvent(order.getId(), "OrderCreated", OrderStatus.CREATED, payload);
+        orderEventService.recordEvent(order.getId(), "OrderCreated", OrderStatus.CREATED, createdPayload);
 
-        CreateOrderResponse response = new CreateOrderResponse(order.getId(), order.getStatus());
+        boolean allReserved = true;
+        String failureReason = null;
+
+        for (CreateOrderRequest.OrderItemRequest itemRequest : request.getItems()) {
+            InventoryClient.ReservationResult result =
+                    inventoryClient.reserveStock(itemRequest.getProductId(), itemRequest.getQuantity());
+
+            if (!result.success()) {
+                allReserved = false;
+                failureReason = result.reason();
+                break;
+            }
+        }
+
+        Order finalOrder;
+        if (allReserved) {
+            Map<String, Object> reservedPayload = Map.of("orderId", order.getId());
+            finalOrder = orderEventService.recordEvent(order.getId(), "StockReserved", OrderStatus.STOCK_RESERVED, reservedPayload);
+        } else {
+            Map<String, Object> failedPayload = Map.of("orderId", order.getId(), "reason", failureReason);
+            finalOrder = orderEventService.recordEvent(order.getId(), "StockReservationFailed", OrderStatus.FAILED, failedPayload);
+        }
+
+        CreateOrderResponse response = new CreateOrderResponse(finalOrder.getId(), finalOrder.getStatus());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
