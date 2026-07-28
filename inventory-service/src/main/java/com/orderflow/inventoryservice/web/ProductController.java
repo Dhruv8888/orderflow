@@ -3,6 +3,7 @@ package com.orderflow.inventoryservice.web;
 import com.orderflow.inventoryservice.domain.Product;
 import com.orderflow.inventoryservice.service.InventoryService;
 import com.orderflow.inventoryservice.web.dto.ProductResponse;
+import com.orderflow.inventoryservice.web.dto.ReleaseStockRequest;
 import com.orderflow.inventoryservice.web.dto.ReserveStockRequest;
 import com.orderflow.inventoryservice.web.dto.ReserveStockResponse;
 import jakarta.validation.Valid;
@@ -27,8 +28,25 @@ public class ProductController {
     @GetMapping("/{id}")
     public ResponseEntity<ProductResponse> getProduct(@PathVariable String id) {
         Product product = inventoryService.getProduct(id);
+        return ResponseEntity.ok(toProductResponse(product));
+    }
 
-        ProductResponse response = new ProductResponse(
+    @PostMapping("/{id}/reserve")
+    public ResponseEntity<ReserveStockResponse> reserveStock(@PathVariable String id,
+                                                               @Valid @RequestBody ReserveStockRequest request) {
+        Product updated = inventoryService.reserveStock(id, request.getQuantity());
+        return ResponseEntity.ok(toReserveResponse(updated));
+    }
+
+    @PostMapping("/{id}/release")
+    public ResponseEntity<ReserveStockResponse> releaseStock(@PathVariable String id,
+                                                               @Valid @RequestBody ReleaseStockRequest request) {
+        Product updated = inventoryService.releaseStock(id, request.getQuantity());
+        return ResponseEntity.ok(toReserveResponse(updated));
+    }
+
+    private ProductResponse toProductResponse(Product product) {
+        return new ProductResponse(
                 product.getId(),
                 product.getSku(),
                 product.getName(),
@@ -36,21 +54,13 @@ public class ProductController {
                 product.getReservedStock(),
                 product.getAvailableStock()
         );
-
-        return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/{id}/reserve")
-    public ResponseEntity<ReserveStockResponse> reserveStock(@PathVariable String id,
-                                                               @Valid @RequestBody ReserveStockRequest request) {
-        Product updated = inventoryService.reserveStock(id, request.getQuantity());
-
-        ReserveStockResponse response = new ReserveStockResponse(
-                updated.getId(),
-                updated.getReservedStock(),
-                updated.getAvailableStock()
+    private ReserveStockResponse toReserveResponse(Product product) {
+        return new ReserveStockResponse(
+                product.getId(),
+                product.getReservedStock(),
+                product.getAvailableStock()
         );
-
-        return ResponseEntity.ok(response);
     }
 }

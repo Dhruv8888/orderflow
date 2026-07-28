@@ -31,4 +31,12 @@ public class InventoryService {
         product.setReservedStock(product.getReservedStock() + quantity);
         return productRepository.save(product);
     }
+
+    public Product releaseStock(String productId, int quantity) {
+        Product product = getProduct(productId);
+
+        int newReserved = Math.max(0, product.getReservedStock() - quantity);
+        product.setReservedStock(newReserved);
+        return productRepository.save(product);
+    }
 }
