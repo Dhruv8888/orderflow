@@ -1,9 +1,11 @@
 package com.orderflow.orderservice.web;
 
-import com.orderflow.orderservice.client.InventoryClient;
 import com.orderflow.orderservice.domain.Order;
 import com.orderflow.orderservice.domain.OrderItem;
 import com.orderflow.orderservice.domain.OrderStatus;
+import com.orderflow.orderservice.event.KafkaTopics;
+import com.orderflow.orderservice.event.OrderCreatedEvent;
+import com.orderflow.orderservice.event.OrderEventPublisher;
 import com.orderflow.orderservice.exception.OrderNotFoundException;
 import com.orderflow.orderservice.repository.OrderEventRepository;
 import com.orderflow.orderservice.repository.OrderItemRepository;
@@ -39,18 +41,18 @@ public class OrderController {
     private final OrderItemRepository orderItemRepository;
     private final OrderEventRepository orderEventRepository;
     private final OrderEventService orderEventService;
-    private final InventoryClient inventoryClient;
+    private final OrderEventPublisher orderEventPublisher;
 
     public OrderController(OrderRepository orderRepository,
                             OrderItemRepository orderItemRepository,
                             OrderEventRepository orderEventRepository,
                             OrderEventService orderEventService,
-                            InventoryClient inventoryClient) {
+                            OrderEventPublisher orderEventPublisher) {
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.orderEventRepository = orderEventRepository;
         this.orderEventService = orderEventService;
-        this.inventoryClient = inventoryClient;
+        this.orderEventPublisher = orderEventPublisher;
     }
 
     @PostMapping
@@ -80,32 +82,16 @@ public class OrderController {
         createdPayload.put("customerId", order.getCustomerId());
         createdPayload.put("items", request.getItems());
 
-        orderEventService.recordEvent(order.getId(), "OrderCreated", OrderStatus.CREATED, createdPayload);
+        Order savedOrder = orderEventService.recordEvent(order.getId(), "OrderCreated", OrderStatus.CREATED, createdPayload);
 
-        boolean allReserved = true;
-        String failureReason = null;
+        List<OrderCreatedEvent.Item> eventItems = request.getItems().stream()
+                .map(i -> new OrderCreatedEvent.Item(i.getProductId(), i.getQuantity(), i.getUnitPrice()))
+                .collect(Collectors.toList());
 
-        for (CreateOrderRequest.OrderItemRequest itemRequest : request.getItems()) {
-            InventoryClient.ReservationResult result =
-                    inventoryClient.reserveStock(itemRequest.getProductId(), itemRequest.getQuantity());
+        OrderCreatedEvent event = new OrderCreatedEvent(savedOrder.getId(), savedOrder.getCustomerId(), eventItems);
+        orderEventPublisher.publish(KafkaTopics.ORDER_CREATED, savedOrder.getId().toString(), event);
 
-            if (!result.success()) {
-                allReserved = false;
-                failureReason = result.reason();
-                break;
-            }
-        }
-
-        Order finalOrder;
-        if (allReserved) {
-            Map<String, Object> reservedPayload = Map.of("orderId", order.getId());
-            finalOrder = orderEventService.recordEvent(order.getId(), "StockReserved", OrderStatus.STOCK_RESERVED, reservedPayload);
-        } else {
-            Map<String, Object> failedPayload = Map.of("orderId", order.getId(), "reason", failureReason);
-            finalOrder = orderEventService.recordEvent(order.getId(), "StockReservationFailed", OrderStatus.FAILED, failedPayload);
-        }
-
-        CreateOrderResponse response = new CreateOrderResponse(finalOrder.getId(), finalOrder.getStatus());
+        CreateOrderResponse response = new CreateOrderResponse(savedOrder.getId(), savedOrder.getStatus());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
