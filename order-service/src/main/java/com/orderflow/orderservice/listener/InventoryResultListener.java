@@ -25,7 +25,7 @@ public class InventoryResultListener {
         this.kafkaTemplate = kafkaTemplate;
     }
 
-    @KafkaListener(topics = KafkaTopics.STOCK_RESERVED, groupId = "order-service")
+    @KafkaListener(topics = KafkaTopics.STOCK_RESERVED, groupId = "order-service", containerFactory = "stockReservedFactory")
     public void onStockReserved(StockReservedEvent event) {
         Map<String, Object> payload = Map.of(
                 "orderId", event.orderId(),
@@ -40,7 +40,7 @@ public class InventoryResultListener {
         kafkaTemplate.send(KafkaTopics.PAYMENT_REQUESTED, order.getId().toString(), paymentRequested);
     }
 
-    @KafkaListener(topics = KafkaTopics.STOCK_RESERVATION_FAILED, groupId = "order-service")
+    @KafkaListener(topics = KafkaTopics.STOCK_RESERVATION_FAILED, groupId = "order-service", containerFactory = "stockReservationFailedFactory")
     public void onStockReservationFailed(StockReservationFailedEvent event) {
         Map<String, Object> payload = Map.of(
                 "orderId", event.orderId(),
