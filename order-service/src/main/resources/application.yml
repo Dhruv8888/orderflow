@@ -1,4 +1,4 @@
-﻿spring:
+spring:
   application:
     name: order-service
 
@@ -17,6 +17,12 @@
         format_sql: true
     database-platform: org.hibernate.dialect.MySQLDialect
 
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
 server:
   port: 8081
 
@@ -28,9 +34,3 @@ management:
 
 inventory-service:
   base-url: http://localhost:8082
-
-kafka:
-  bootstrap-servers: localhost:9092
-  producer:
-    key-serializer: org.apache.kafka.common.serialization.StringSerializer
-    value-serializer: org.apache.kafka.common.serialization.StringSerializer
