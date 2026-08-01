@@ -17,6 +17,11 @@ spring:
         format_sql: true
     database-platform: org.hibernate.dialect.MySQLDialect
 
+  flyway:
+    table: flyway_schema_history_payment
+    baseline-on-migrate: true
+    baseline-version: 0
+
   kafka:
     bootstrap-servers: localhost:9092
     producer:
