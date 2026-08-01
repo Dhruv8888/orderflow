@@ -1,5 +1,9 @@
 package com.orderflow.orderservice.config;
 
+import com.orderflow.orderservice.event.OrderShippedEvent;
+import com.orderflow.orderservice.event.PaymentCompletedEvent;
+import com.orderflow.orderservice.event.PaymentFailedEvent;
+import com.orderflow.orderservice.event.ShipmentRequestedEvent;
 import com.orderflow.orderservice.event.StockReservationFailedEvent;
 import com.orderflow.orderservice.event.StockReservedEvent;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -29,35 +33,46 @@ public class KafkaConsumerConfig {
         return props;
     }
 
-    @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, StockReservedEvent> stockReservedFactory() {
-        JsonDeserializer<StockReservedEvent> deserializer = new JsonDeserializer<>(StockReservedEvent.class);
+    private <T> ConcurrentKafkaListenerContainerFactory<String, T> factoryFor(Class<T> targetType) {
+        JsonDeserializer<T> deserializer = new JsonDeserializer<>(targetType);
         deserializer.setUseTypeHeaders(false);
         deserializer.addTrustedPackages("*");
 
-        Map<String, Object> props = baseConsumerProps();
-        ConsumerFactory<String, StockReservedEvent> cf =
-                new DefaultKafkaConsumerFactory<>(props, new StringDeserializer(), deserializer);
+        ConsumerFactory<String, T> cf =
+                new DefaultKafkaConsumerFactory<>(baseConsumerProps(), new StringDeserializer(), deserializer);
 
-        ConcurrentKafkaListenerContainerFactory<String, StockReservedEvent> factory =
-                new ConcurrentKafkaListenerContainerFactory<>();
+        ConcurrentKafkaListenerContainerFactory<String, T> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(cf);
         return factory;
     }
 
     @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, StockReservedEvent> stockReservedFactory() {
+        return factoryFor(StockReservedEvent.class);
+    }
+
+    @Bean
     public ConcurrentKafkaListenerContainerFactory<String, StockReservationFailedEvent> stockReservationFailedFactory() {
-        JsonDeserializer<StockReservationFailedEvent> deserializer = new JsonDeserializer<>(StockReservationFailedEvent.class);
-        deserializer.setUseTypeHeaders(false);
-        deserializer.addTrustedPackages("*");
+        return factoryFor(StockReservationFailedEvent.class);
+    }
 
-        Map<String, Object> props = baseConsumerProps();
-        ConsumerFactory<String, StockReservationFailedEvent> cf =
-                new DefaultKafkaConsumerFactory<>(props, new StringDeserializer(), deserializer);
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, PaymentCompletedEvent> paymentCompletedFactory() {
+        return factoryFor(PaymentCompletedEvent.class);
+    }
 
-        ConcurrentKafkaListenerContainerFactory<String, StockReservationFailedEvent> factory =
-                new ConcurrentKafkaListenerContainerFactory<>();
-        factory.setConsumerFactory(cf);
-        return factory;
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, PaymentFailedEvent> paymentFailedFactory() {
+        return factoryFor(PaymentFailedEvent.class);
+    }
+
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, ShipmentRequestedEvent> shipmentRequestedFactory() {
+        return factoryFor(ShipmentRequestedEvent.class);
+    }
+
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, OrderShippedEvent> orderShippedFactory() {
+        return factoryFor(OrderShippedEvent.class);
     }
 }

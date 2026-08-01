@@ -12,6 +12,7 @@ public final class KafkaTopics {
     public static final String REFUND_PAYMENT = "refund-payment";
     public static final String ORDER_SHIPPED = "order-shipped";
     public static final String ORDER_CANCELLED = "order-cancelled";
+    public static final String SHIPMENT_REQUESTED = "shipment-requested";
 
     private KafkaTopics() {
     }
