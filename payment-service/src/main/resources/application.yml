@@ -36,3 +36,6 @@ management:
     web:
       exposure:
         include: health,info
+
+payment:
+  failure-rate: 0.2
