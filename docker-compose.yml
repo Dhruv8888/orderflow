@@ -51,6 +51,17 @@ services:
     ports:
       - "9092:9092"
 
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: orderflow-rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: orderflow
+      RABBITMQ_DEFAULT_PASS: orderflow
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
 volumes:
   mysql_data:
   mongo_data:
