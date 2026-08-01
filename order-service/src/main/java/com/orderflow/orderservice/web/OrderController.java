@@ -7,6 +7,7 @@ import com.orderflow.orderservice.event.KafkaTopics;
 import com.orderflow.orderservice.event.OrderCreatedEvent;
 import com.orderflow.orderservice.event.OrderEventPublisher;
 import com.orderflow.orderservice.exception.OrderNotFoundException;
+import com.orderflow.orderservice.notification.NotificationPublisher;
 import com.orderflow.orderservice.repository.OrderEventRepository;
 import com.orderflow.orderservice.repository.OrderItemRepository;
 import com.orderflow.orderservice.repository.OrderRepository;
@@ -42,17 +43,20 @@ public class OrderController {
     private final OrderEventRepository orderEventRepository;
     private final OrderEventService orderEventService;
     private final OrderEventPublisher orderEventPublisher;
+    private final NotificationPublisher notificationPublisher;
 
     public OrderController(OrderRepository orderRepository,
                             OrderItemRepository orderItemRepository,
                             OrderEventRepository orderEventRepository,
                             OrderEventService orderEventService,
-                            OrderEventPublisher orderEventPublisher) {
+                            OrderEventPublisher orderEventPublisher,
+                            NotificationPublisher notificationPublisher) {
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.orderEventRepository = orderEventRepository;
         this.orderEventService = orderEventService;
         this.orderEventPublisher = orderEventPublisher;
+        this.notificationPublisher = notificationPublisher;
     }
 
     @PostMapping
@@ -90,6 +94,7 @@ public class OrderController {
 
         OrderCreatedEvent event = new OrderCreatedEvent(savedOrder.getId(), savedOrder.getCustomerId(), eventItems);
         orderEventPublisher.publish(KafkaTopics.ORDER_CREATED, savedOrder.getId().toString(), event);
+        notificationPublisher.notify(savedOrder.getId(), "OrderCreated", "Your order has been placed.");
 
         CreateOrderResponse response = new CreateOrderResponse(savedOrder.getId(), savedOrder.getStatus());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
