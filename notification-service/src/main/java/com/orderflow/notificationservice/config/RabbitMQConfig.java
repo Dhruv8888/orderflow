@@ -13,4 +13,9 @@ public class RabbitMQConfig {
     public Queue notificationsQueue() {
         return new Queue(NOTIFICATIONS_QUEUE, true);
     }
+
+    @Bean
+    public org.springframework.amqp.support.converter.Jackson2JsonMessageConverter jackson2JsonMessageConverter() {
+    return new org.springframework.amqp.support.converter.Jackson2JsonMessageConverter();
+}
 }

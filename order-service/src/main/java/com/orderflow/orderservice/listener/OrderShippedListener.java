@@ -3,6 +3,7 @@ package com.orderflow.orderservice.listener;
 import com.orderflow.orderservice.domain.OrderStatus;
 import com.orderflow.orderservice.event.KafkaTopics;
 import com.orderflow.orderservice.event.OrderShippedEvent;
+import com.orderflow.orderservice.exception.IllegalOrderStateTransitionException;
 import com.orderflow.orderservice.notification.NotificationPublisher;
 import com.orderflow.orderservice.service.OrderEventService;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -23,9 +24,12 @@ public class OrderShippedListener {
 
     @KafkaListener(topics = KafkaTopics.ORDER_SHIPPED, groupId = "order-service", containerFactory = "orderShippedFactory")
     public void onOrderShipped(OrderShippedEvent event) {
-        Map<String, Object> payload = Map.of("orderId", event.orderId());
-        orderEventService.recordEvent(event.orderId(), "OrderShipped", OrderStatus.SHIPPED, payload);
-
-        notificationPublisher.notify(event.orderId(), "OrderShipped", "Your order has shipped!");
+        try {
+            Map<String, Object> payload = Map.of("orderId", event.orderId());
+            orderEventService.recordEvent(event.orderId(), "OrderShipped", OrderStatus.SHIPPED, payload);
+            notificationPublisher.notify(event.orderId(), "OrderShipped", "Your order has shipped!");
+        } catch (IllegalOrderStateTransitionException e) {
+            System.out.println("Ignoring duplicate/out-of-order OrderShipped event: " + e.getMessage());
+        }
     }
 }

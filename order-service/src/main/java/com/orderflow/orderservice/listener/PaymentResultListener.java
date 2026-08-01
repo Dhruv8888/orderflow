@@ -5,6 +5,7 @@ import com.orderflow.orderservice.event.KafkaTopics;
 import com.orderflow.orderservice.event.PaymentCompletedEvent;
 import com.orderflow.orderservice.event.PaymentFailedEvent;
 import com.orderflow.orderservice.event.ShipmentRequestedEvent;
+import com.orderflow.orderservice.exception.IllegalOrderStateTransitionException;
 import com.orderflow.orderservice.notification.NotificationPublisher;
 import com.orderflow.orderservice.service.OrderEventService;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -30,18 +31,26 @@ public class PaymentResultListener {
 
     @KafkaListener(topics = KafkaTopics.PAYMENT_COMPLETED, groupId = "order-service", containerFactory = "paymentCompletedFactory")
     public void onPaymentCompleted(PaymentCompletedEvent event) {
-        Map<String, Object> payload = Map.of("orderId", event.orderId(), "paymentId", event.paymentId());
-        orderEventService.recordEvent(event.orderId(), "PaymentCompleted", OrderStatus.PAID, payload);
+        try {
+            Map<String, Object> payload = Map.of("orderId", event.orderId(), "paymentId", event.paymentId());
+            orderEventService.recordEvent(event.orderId(), "PaymentCompleted", OrderStatus.PAID, payload);
 
-        kafkaTemplate.send(KafkaTopics.SHIPMENT_REQUESTED, event.orderId().toString(),
-                new ShipmentRequestedEvent(event.orderId()));
+            kafkaTemplate.send(KafkaTopics.SHIPMENT_REQUESTED, event.orderId().toString(),
+                    new ShipmentRequestedEvent(event.orderId()));
 
-        notificationPublisher.notify(event.orderId(), "PaymentCompleted", "Your payment was successful.");
+            notificationPublisher.notify(event.orderId(), "PaymentCompleted", "Your payment was successful.");
+        } catch (IllegalOrderStateTransitionException e) {
+            System.out.println("Ignoring duplicate/out-of-order PaymentCompleted event: " + e.getMessage());
+        }
     }
 
     @KafkaListener(topics = KafkaTopics.PAYMENT_FAILED, groupId = "order-service", containerFactory = "paymentFailedFactory")
     public void onPaymentFailed(PaymentFailedEvent event) {
-        Map<String, Object> payload = Map.of("orderId", event.orderId(), "reasonCode", event.reasonCode());
-        orderEventService.recordEvent(event.orderId(), "PaymentFailed", OrderStatus.FAILED, payload);
+        try {
+            Map<String, Object> payload = Map.of("orderId", event.orderId(), "reasonCode", event.reasonCode());
+            orderEventService.recordEvent(event.orderId(), "PaymentFailed", OrderStatus.FAILED, payload);
+        } catch (IllegalOrderStateTransitionException e) {
+            System.out.println("Ignoring duplicate/out-of-order PaymentFailed event: " + e.getMessage());
+        }
     }
 }
