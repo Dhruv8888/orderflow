@@ -2,17 +2,27 @@ package com.orderflow.inventoryservice.service;
 
 import com.orderflow.inventoryservice.domain.Product;
 import com.orderflow.inventoryservice.exception.InsufficientStockException;
+import com.orderflow.inventoryservice.exception.LockAcquisitionException;
 import com.orderflow.inventoryservice.exception.ProductNotFoundException;
+import com.orderflow.inventoryservice.lock.RedisLockService;
 import com.orderflow.inventoryservice.repository.ProductRepository;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
+
+import java.time.Duration;
 
 @Service
 public class InventoryService {
 
-    private final ProductRepository productRepository;
+    private static final Duration LOCK_TTL = Duration.ofSeconds(5);
+    private static final int MAX_RETRIES = 3;
 
-    public InventoryService(ProductRepository productRepository) {
+    private final ProductRepository productRepository;
+    private final RedisLockService lockService;
+
+    public InventoryService(ProductRepository productRepository, RedisLockService lockService) {
         this.productRepository = productRepository;
+        this.lockService = lockService;
     }
 
     public Product getProduct(String productId) {
@@ -21,6 +31,14 @@ public class InventoryService {
     }
 
     public Product reserveStock(String productId, int quantity) {
+        return withLock(productId, () -> doReserve(productId, quantity));
+    }
+
+    public Product releaseStock(String productId, int quantity) {
+        return withLock(productId, () -> doRelease(productId, quantity));
+    }
+
+    private Product doReserve(String productId, int quantity) {
         Product product = getProduct(productId);
 
         int available = product.getAvailableStock();
@@ -32,11 +50,36 @@ public class InventoryService {
         return productRepository.save(product);
     }
 
-    public Product releaseStock(String productId, int quantity) {
+    private Product doRelease(String productId, int quantity) {
         Product product = getProduct(productId);
 
         int newReserved = Math.max(0, product.getReservedStock() - quantity);
         product.setReservedStock(newReserved);
         return productRepository.save(product);
+    }
+
+    private Product withLock(String productId, java.util.function.Supplier<Product> action) {
+        String lockKey = "lock:product:" + productId;
+        String token = lockService.tryLock(lockKey, LOCK_TTL);
+
+        if (token == null) {
+            throw new LockAcquisitionException(productId);
+        }
+
+        try {
+            int attempts = 0;
+            while (true) {
+                try {
+                    return action.get();
+                } catch (OptimisticLockingFailureException e) {
+                    attempts++;
+                    if (attempts >= MAX_RETRIES) {
+                        throw e;
+                    }
+                }
+            }
+        } finally {
+            lockService.unlock(lockKey, token);
+        }
     }
 }

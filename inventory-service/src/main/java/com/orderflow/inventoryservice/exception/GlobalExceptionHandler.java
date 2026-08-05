@@ -28,4 +28,10 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(Map.of("error", "The product was modified concurrently. Please retry."));
     }
+
+    @ExceptionHandler(LockAcquisitionException.class)
+    public ResponseEntity<Map<String, String>> handleLockFailure(LockAcquisitionException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Map.of("error", ex.getMessage()));
+    }
 }
