@@ -6,6 +6,8 @@ import com.orderflow.inventoryservice.exception.LockAcquisitionException;
 import com.orderflow.inventoryservice.exception.ProductNotFoundException;
 import com.orderflow.inventoryservice.lock.RedisLockService;
 import com.orderflow.inventoryservice.repository.ProductRepository;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 
@@ -25,21 +27,25 @@ public class InventoryService {
         this.lockService = lockService;
     }
 
+    @Cacheable(value = "products", key = "#productId")
     public Product getProduct(String productId) {
         return productRepository.findById(productId)
                 .orElseThrow(() -> new ProductNotFoundException(productId));
     }
 
+    @CacheEvict(value = "products", key = "#productId")
     public Product reserveStock(String productId, int quantity) {
         return withLock(productId, () -> doReserve(productId, quantity));
     }
 
+    @CacheEvict(value = "products", key = "#productId")
     public Product releaseStock(String productId, int quantity) {
         return withLock(productId, () -> doRelease(productId, quantity));
     }
 
     private Product doReserve(String productId, int quantity) {
-        Product product = getProduct(productId);
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ProductNotFoundException(productId));
 
         int available = product.getAvailableStock();
         if (quantity > available) {
@@ -51,7 +57,8 @@ public class InventoryService {
     }
 
     private Product doRelease(String productId, int quantity) {
-        Product product = getProduct(productId);
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ProductNotFoundException(productId));
 
         int newReserved = Math.max(0, product.getReservedStock() - quantity);
         product.setReservedStock(newReserved);
