@@ -63,4 +63,18 @@ public class OrderEventService {
             throw new RuntimeException("Failed to serialize event payload", e);
         }
     }
+
+    @Transactional
+    public Order recordInformationalEvent(UUID orderId, String eventType, Object payload) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new OrderNotFoundException(orderId));
+    
+        OrderEvent event = new OrderEvent();
+        event.setOrderId(orderId);
+        event.setEventType(eventType);
+        event.setPayloadJson(toJson(payload));
+        orderEventRepository.save(event);
+    
+        return order;
+    }
 }

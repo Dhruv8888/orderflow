@@ -14,6 +14,9 @@ import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
+import com.orderflow.orderservice.event.ShipmentFailedEvent;
+import com.orderflow.orderservice.event.StockReleasedEvent;
+import com.orderflow.orderservice.event.PaymentRefundedEvent;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -74,5 +77,20 @@ public class KafkaConsumerConfig {
     @Bean
     public ConcurrentKafkaListenerContainerFactory<String, OrderShippedEvent> orderShippedFactory() {
         return factoryFor(OrderShippedEvent.class);
+    }
+
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, ShipmentFailedEvent> shipmentFailedFactory() {
+        return factoryFor(ShipmentFailedEvent.class);
+    }
+    
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, StockReleasedEvent> stockReleasedFactory() {
+        return factoryFor(StockReleasedEvent.class);
+    }
+    
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, PaymentRefundedEvent> paymentRefundedFactory() {
+        return factoryFor(PaymentRefundedEvent.class);
     }
 }

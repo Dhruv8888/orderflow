@@ -41,3 +41,6 @@ management:
 
 inventory-service:
   base-url: http://localhost:8082
+
+shipping:
+  failure-rate: 0.0

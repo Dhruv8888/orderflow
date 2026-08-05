@@ -43,4 +43,10 @@ public class Order {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private Instant updatedAt;
+
+    @Column(name = "stock_released", nullable = false)
+    private boolean stockReleased = false;
+    
+    @Column(name = "payment_refunded", nullable = false)
+    private boolean paymentRefunded = false;
 }

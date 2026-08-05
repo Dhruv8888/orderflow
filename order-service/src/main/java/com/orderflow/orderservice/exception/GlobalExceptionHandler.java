@@ -1,5 +1,6 @@
 package com.orderflow.orderservice.exception;
 
+import org.hibernate.exception.LockAcquisitionException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -31,5 +32,11 @@ public class GlobalExceptionHandler {
                 errors.put(error.getField(), error.getDefaultMessage())
         );
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
+    }
+
+    @ExceptionHandler(LockAcquisitionException.class)
+    public ResponseEntity<Map<String, String>> handleLockFailure(LockAcquisitionException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Map.of("error", ex.getMessage()));
     }
 }
