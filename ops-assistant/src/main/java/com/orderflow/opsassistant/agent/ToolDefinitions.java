@@ -21,9 +21,10 @@ public final class ToolDefinitions {
 
     private static Map<String, Object> tool(String name, String description, String paramName, String paramDescription) {
         return Map.of(
+                "type", "function",
                 "name", name,
                 "description", description,
-                "input_schema", Map.of(
+                "parameters", Map.of(
                         "type", "object",
                         "properties", Map.of(
                                 paramName, Map.of(

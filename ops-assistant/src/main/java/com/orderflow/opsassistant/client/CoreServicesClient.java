@@ -39,4 +39,12 @@ public class CoreServicesClient {
                 .bodyToMono(String.class)
                 .block();
     }
+
+    public String getStuckOrders(int thresholdMinutes) {
+        return orderServiceWebClient.get()
+                .uri("/orders/stuck?thresholdMinutes={t}", thresholdMinutes)
+                .retrieve()
+                .bodyToMono(String.class)
+                .block();
+    }
 }
