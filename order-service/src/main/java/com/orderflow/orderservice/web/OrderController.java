@@ -17,6 +17,7 @@ import com.orderflow.orderservice.web.dto.CreateOrderResponse;
 import com.orderflow.orderservice.web.dto.OrderEventResponse;
 import com.orderflow.orderservice.web.dto.OrderItemResponse;
 import com.orderflow.orderservice.web.dto.OrderResponse;
+import com.orderflow.orderservice.web.dto.StuckOrderResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +26,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
@@ -100,7 +102,18 @@ public class OrderController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/stuck")
+    public ResponseEntity<List<StuckOrderResponse>> getStuckOrders(
+            @RequestParam(defaultValue = "15") int thresholdMinutes) {
+
+        List<StuckOrderResponse> stuck = orderEventService.getStuckOrders(thresholdMinutes).stream()
+                .map(o -> new StuckOrderResponse(o.getId(), o.getStatus(), o.getUpdatedAt()))
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(stuck);
+    }
+
+    @GetMapping("/{id:[0-9a-fA-F-]{36}}")
     public ResponseEntity<OrderResponse> getOrder(@PathVariable UUID id) {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new OrderNotFoundException(id));

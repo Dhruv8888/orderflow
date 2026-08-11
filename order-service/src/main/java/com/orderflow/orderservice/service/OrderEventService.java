@@ -13,6 +13,9 @@ import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.core.JacksonException;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -76,5 +79,17 @@ public class OrderEventService {
         orderEventRepository.save(event);
     
         return order;
+    }
+
+    public List<Order> getStuckOrders(int thresholdMinutes) {
+        Instant threshold = Instant.now().minus(thresholdMinutes, ChronoUnit.MINUTES);
+        List<UUID> staleOrderIds = orderEventRepository.findOrderIdsWithLatestEventBefore(threshold);
+    
+        if (staleOrderIds.isEmpty()) {
+            return List.of();
+        }
+    
+        List<OrderStatus> terminalStatuses = List.of(OrderStatus.SHIPPED, OrderStatus.FAILED, OrderStatus.CANCELLED);
+        return orderRepository.findByIdInAndStatusNotIn(staleOrderIds, terminalStatuses);
     }
 }
