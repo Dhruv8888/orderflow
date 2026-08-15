@@ -168,6 +168,20 @@ services:
     depends_on:
       - prometheus
 
+  ops-assistant:
+    build: ./ops-assistant
+    container_name: orderflow-ops-assistant
+    restart: unless-stopped
+    depends_on:
+      - order-service
+      - payment-service
+    environment:
+      ORDER_SERVICE_BASE_URL: http://order-service:8081
+      PAYMENT_SERVICE_BASE_URL: http://payment-service:8083
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+    ports:
+      - "8085:8085"
+
 volumes:
   mysql_data:
   mongo_data:

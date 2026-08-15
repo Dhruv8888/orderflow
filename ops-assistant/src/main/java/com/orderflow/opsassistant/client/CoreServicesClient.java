@@ -4,6 +4,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.util.Map;
+
 @Component
 public class CoreServicesClient {
 
@@ -45,6 +47,21 @@ public class CoreServicesClient {
                 .uri("/orders/stuck?thresholdMinutes={t}", thresholdMinutes)
                 .retrieve()
                 .bodyToMono(String.class)
+                .block();
+    }
+
+    /**
+     * Calls order-service's internal remediation endpoint (7.16). Only ever invoked
+     * after a human has approved a PendingAction — this client method has no opinion
+     * on that, it just executes exactly the action string it's given, which is always
+     * one of RemediationAction's whitelisted constants by construction.
+     */
+    public void executeRemediation(String orderId, String action) {
+        orderServiceWebClient.post()
+                .uri("/orders/{id}/remediate", orderId)
+                .bodyValue(Map.of("action", action))
+                .retrieve()
+                .bodyToMono(Void.class)
                 .block();
     }
 }

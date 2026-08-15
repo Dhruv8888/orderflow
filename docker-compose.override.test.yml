@@ -1,0 +1,13 @@
+services:
+  order-service:
+    environment:
+      SHIPPING_STUB_ENABLED: "false"
+
+  payment-service:
+    environment:
+      PAYMENT_FAILURE_RATE: "0"
+
+  ops-assistant:
+    environment:
+      OPS_MONITOR_THRESHOLD_MINUTES: "1"
+      OPS_MONITOR_FIXED_RATE_MS: "30000"
