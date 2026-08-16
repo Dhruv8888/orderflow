@@ -1,5 +1,5 @@
 export const environment = {
-  production: false,
-  orderServiceUrl: 'http://localhost:8081',
-  opsAssistantUrl: 'http://localhost:8085',
+  production: true,
+  orderServiceUrl: '/api/orders',
+  opsAssistantUrl: '/api/ops-assistant',
 };
