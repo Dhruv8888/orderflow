@@ -28,10 +28,12 @@
   margin-bottom: 4px;
 
   mat-form-field {
-    flex: 1;
+    flex: 2;
   }
 
-  .quantity-field {
+  .quantity-field,
+  .price-field {
+    flex: 1;
     max-width: 120px;
   }
 }

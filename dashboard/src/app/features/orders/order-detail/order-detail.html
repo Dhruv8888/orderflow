@@ -1,1 +1,76 @@
-<p>order-detail works!</p>
+<div class="order-detail-page">
+  <a routerLink="/orders" class="back-link">
+    <mat-icon>arrow_back</mat-icon>
+    Back to orders
+  </a>
+
+  @if (loading()) {
+    <div class="loading-row">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+  } @else if (loadError()) {
+    <mat-card class="error-card">
+      <mat-card-content>{{ loadError() }}</mat-card-content>
+    </mat-card>
+  } @else if (order()) {
+    <mat-card class="summary-card">
+      <mat-card-header>
+        <mat-card-title>Order {{ order()!.id }}</mat-card-title>
+        <mat-card-subtitle>Customer: {{ order()!.customerId }}</mat-card-subtitle>
+      </mat-card-header>
+
+      <mat-card-content>
+        <div class="summary-row">
+          <mat-chip [class]="statusColor(order()!.status)">{{ order()!.status }}</mat-chip>
+          <span class="total">{{ order()!.totalAmount | currency }}</span>
+        </div>
+
+        <table class="items-table">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Quantity</th>
+              <th>Unit price</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of order()!.items; track item.id) {
+              <tr>
+                <td>{{ item.productId }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>{{ item.unitPrice | currency }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </mat-card-content>
+    </mat-card>
+
+    <h2 class="timeline-heading">Event history</h2>
+
+    <div class="timeline">
+      @for (event of history(); track $index) {
+        <div class="timeline-entry">
+          <div class="timeline-marker">
+            <mat-icon [class]="eventIconClass(event.eventType)">{{ eventIcon(event.eventType) }}</mat-icon>
+            @if (!$last) {
+              <div class="timeline-line"></div>
+            }
+          </div>
+
+          <div class="timeline-content">
+            <div class="timeline-header">
+              <span class="event-type">{{ event.eventType }}</span>
+              <span class="event-time">{{ event.createdAt | date: 'medium' }}</span>
+            </div>
+            <pre class="event-payload">{{ formatPayload(event.payloadJson) }}</pre>
+          </div>
+        </div>
+      }
+
+      @empty {
+        <p class="empty-text">No events recorded yet.</p>
+      }
+    </div>
+  }
+</div>

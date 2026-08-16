@@ -35,6 +35,7 @@ export interface OrderEvent {
 export interface CreateOrderItemRequest {
   productId: string;
   quantity: number;
+  unitPrice: number;
 }
 
 export interface CreateOrderRequest {

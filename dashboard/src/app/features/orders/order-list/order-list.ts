@@ -58,6 +58,7 @@ export class OrderList implements OnInit {
     return this.fb.nonNullable.group({
       productId: ['', Validators.required],
       quantity: [1, [Validators.required, Validators.min(1)]],
+      unitPrice: [0.01, [Validators.required, Validators.min(0.01)]],
     });
   }
 
@@ -105,6 +106,7 @@ export class OrderList implements OnInit {
         items: raw.items.map((i) => ({
           productId: i.productId,
           quantity: i.quantity,
+          unitPrice: i.unitPrice,
         })),
       })
       .subscribe({
